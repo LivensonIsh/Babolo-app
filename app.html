@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Babolo — Application</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a0a09">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: dark;
+    --bg:#0a0a09; --bg-elev:#141310; --bg-elev-2:#1c1a15;
+    --border:#272512; --border-soft:#1f1d12;
+    --text:#f7f4e8; --text-dim:#a3a08c; --text-faint:#63604e;
+    --hive-1:#ffd400; --hive-2:#ffb000; --lime:#c6ff5e; --amber:#ffb020; --danger:#ff5252;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;} button{font-family:inherit;cursor:pointer;}
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:8px;}
+
+  .flame-text{background:linear-gradient(100deg,var(--hive-2),var(--hive-1));-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .flame-ring{position:relative;}
+  .flame-ring::before{content:"";position:absolute;inset:-1px;border-radius:inherit;background:linear-gradient(120deg,var(--hive-1),var(--hive-2),var(--hive-1));background-size:300% 300%;z-index:-1;animation:flameshift 6s ease infinite;opacity:.9;}
+  @keyframes flameshift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+
+  .card{background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;}
+  .input{width:100%;background:var(--bg-elev-2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:13px 14px;font-size:14.5px;outline:none;}
+  .input:focus{border-color:var(--hive-1);}
+  .btn{border-radius:11px;padding:13px 18px;font-weight:600;font-size:14.5px;border:1px solid transparent;}
+  .btn:active{transform:scale(.98);}
+  .btn-flame{background:linear-gradient(100deg,var(--hive-2),var(--hive-1));color:#120600;}
+  .btn-ghost{background:transparent;border-color:var(--border);color:var(--text);}
+  .btn-ghost:hover{border-color:var(--text-dim);}
+  .btn-white{background:#fff;color:#111;}
+  .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-weight:600;}
+  .notice{background:rgba(255,176,32,.08);border:1px solid rgba(255,176,32,.35);color:#ffd58a;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.5;}
+
+  #app{min-height:100vh;display:flex;flex-direction:column;}
+  header.topbar{position:sticky;top:0;z-index:20;background:rgba(10,10,9,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-soft);}
+  .topbar-inner{max-width:1040px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:19px;}
+  .wallet-pill{display:flex;align-items:center;gap:8px;background:var(--bg-elev);border:1px solid var(--border);padding:7px 12px;border-radius:100px;font-size:13px;font-weight:600;}
+  .avatar{width:32px;height:32px;border-radius:100%;background:linear-gradient(135deg,var(--hive-1),var(--hive-2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#1a0800;}
+  main.container{max-width:1040px;margin:0 auto;padding:24px 20px 100px;width:100%;flex:1;}
+  nav.bottomnav{position:sticky;bottom:0;z-index:20;background:rgba(10,10,9,.92);backdrop-filter:blur(10px);border-top:1px solid var(--border-soft);display:flex;justify-content:space-around;padding:8px 4px calc(8px + env(safe-area-inset-bottom));}
+  .navbtn{background:none;border:none;color:var(--text-faint);display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:600;padding:6px 10px;border-radius:10px;}
+  .navbtn .ic{font-size:18px;} .navbtn.active{color:var(--hive-2);}
+
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 0%, rgba(255,212,0,.10), transparent 55%), var(--bg);}
+  .login-card{width:100%;max-width:400px;}
+  .login-logo{text-align:center;margin-bottom:20px;}
+  .or-sep{display:flex;align-items:center;gap:12px;color:var(--text-faint);font-size:12px;margin:16px 0;}
+  .or-sep .line{flex:1;height:1px;background:var(--border);}
+  .auth-toggle{display:flex;gap:6px;background:var(--bg-elev-2);padding:4px;border-radius:12px;margin-bottom:16px;}
+  .auth-toggle button{flex:1;padding:9px;border:none;background:none;border-radius:9px;color:var(--text-dim);font-weight:600;font-size:13px;}
+  .auth-toggle button.active{background:var(--bg-elev);color:var(--text);box-shadow:0 0 0 1px var(--border);}
+
+  .niche-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .niche-chip{border:1px solid var(--border);border-radius:100px;padding:8px 13px;background:var(--bg-elev-2);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px;cursor:pointer;}
+  .niche-chip.selected{border-color:var(--hive-1);background:rgba(255,212,0,.1);color:var(--hive-2);}
+
+  .gauge-wrap{display:flex;align-items:center;gap:16px;}
+  .gauge-circle{position:relative;width:88px;height:88px;border-radius:100%;flex-shrink:0;background:conic-gradient(var(--gauge-color, var(--hive-1)) calc(var(--pct,0)*1%), var(--bg-elev-2) 0);}
+  .gauge-circle::after{content:"";position:absolute;inset:8px;border-radius:100%;background:var(--bg-elev);}
+  .gauge-circle .gauge-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk';font-weight:700;font-size:20px;z-index:1;}
+  .subscore-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--text-dim);padding:5px 0;border-bottom:1px solid var(--border-soft);}
+  .subscore-row:last-child{border-bottom:none;}
+  .mismatch-banner{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.4);border-radius:10px;padding:12px 14px;font-size:13px;color:#ffd58a;display:flex;gap:8px;align-items:flex-start;}
+  .feedback-block{padding:14px 0;border-bottom:1px solid var(--border-soft);}
+  .feedback-block:last-child{border-bottom:none;}
+  .feedback-title{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .feedback-timestamp{font-size:10.5px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:100px;padding:2px 8px;color:var(--text-dim);font-family:'JetBrains Mono';}
+  .feedback-text{font-size:13px;color:var(--text-dim);margin-bottom:6px;line-height:1.5;}
+  .feedback-suggestion{font-size:13px;background:rgba(198,255,94,.08);border-left:2px solid var(--lime);padding:8px 10px;border-radius:0 8px 8px 0;color:#e9ffcf;}
+  .caption-tabs{display:flex;gap:6px;margin-bottom:10px;}
+  .caption-tab-btn{flex:1;padding:8px;border-radius:9px;border:1px solid var(--border);background:var(--bg-elev-2);font-size:12px;font-weight:600;color:var(--text-dim);}
+  .caption-tab-btn.active{border-color:var(--hive-1);color:var(--hive-2);background:rgba(255,212,0,.08);}
+  .hashtag-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .hashtag-chip{font-size:11.5px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:100px;padding:4px 10px;color:var(--hive-1);}
+  .sim-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .sim-item{background:var(--bg-elev-2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;}
+  .sim-item .sim-val{font-family:'Space Grotesk';font-weight:700;font-size:14px;}
+  .sim-item .sim-label{font-size:10px;color:var(--text-faint);margin-top:2px;}
+  .sim-delta{font-size:10.5px;font-weight:700;margin-top:4px;}
+  .sim-delta.up{color:var(--lime);} .sim-delta.down{color:var(--danger);}
+  @media (max-width:480px){.sim-grid{grid-template-columns:repeat(2,1fr);}}
+  .progress-badge{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:100px;}
+  .progress-badge.up{background:rgba(198,255,94,.12);color:var(--lime);}
+  .progress-badge.down{background:rgba(255,82,82,.12);color:var(--danger);}
+  .progress-badge.stable{background:var(--bg-elev-2);color:var(--text-dim);}
+  .profile-list{margin:0;padding:0 0 0 18px;font-size:13px;color:var(--text-dim);display:flex;flex-direction:column;gap:6px;}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media (max-width:640px){.grid2{grid-template-columns:1fr;}}
+  .tabbar{display:flex;gap:6px;background:var(--bg-elev-2);padding:4px;border-radius:12px;}
+  .tabbtn{flex:1;padding:9px 10px;border:none;background:none;border-radius:9px;color:var(--text-dim);font-weight:600;font-size:13px;}
+  .tabbtn.active{background:var(--bg-elev);color:var(--text);box-shadow:0 0 0 1px var(--border);}
+  .dropzone{border:1.5px dashed var(--border);border-radius:12px;padding:26px 14px;text-align:center;color:var(--text-dim);font-size:13.5px;}
+  .dropzone.has-file{border-color:var(--lime);color:var(--lime);border-style:solid;}
+  .qr{width:150px;height:150px;background:#fff;border-radius:10px;margin:0 auto;display:flex;align-items:center;justify-content:center;}
+  .balance-num{font-family:'Space Grotesk';font-weight:700;font-size:32px;letter-spacing:-.02em;}
+  .badge-free{display:inline-block;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;background:var(--bg-elev-2);color:var(--text-dim);border:1px solid var(--border);}
+  .badge-premium{display:inline-block;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:700;color:#1a0f00;background:linear-gradient(100deg,var(--hive-2),var(--hive-1));}
+  .hist-item{padding:14px 0;border-bottom:1px solid var(--border-soft);}
+  .hist-item:last-child{border-bottom:none;}
+  .chat-scroll{display:flex;flex-direction:column;gap:10px;max-height:440px;overflow-y:auto;padding:4px 2px 12px;}
+  .bubble{max-width:78%;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.5;}
+  .bubble.me{align-self:flex-end;background:linear-gradient(100deg,var(--hive-2),var(--hive-1));color:#160800;border-bottom-right-radius:4px;}
+  .bubble.support{align-self:flex-start;background:var(--bg-elev-2);border:1px solid var(--border);border-bottom-left-radius:4px;}
+  .spinner{width:15px;height:15px;border-radius:100%;border:2px solid rgba(0,0,0,.25);border-top-color:#160800;animation:spin .7s linear infinite;display:inline-block;vertical-align:-2px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg-elev);border:1px solid var(--border);padding:11px 18px;border-radius:100px;font-size:13.5px;font-weight:600;z-index:60;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s, transform .2s;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-6px);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(6,5,3,.72);backdrop-filter:blur(4px);z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .modal-card-wrap{width:100%;max-width:400px;position:relative;}
+  .modal-close{position:absolute;top:-14px;right:-6px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text);width:32px;height:32px;border-radius:100%;font-size:15px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = '';
+
+const NICHES = {
+  motivation:{label:'Motivation', icon:'🎯'}, humour:{label:'Humour', icon:'😂'},
+  lifestyle:{label:'Lifestyle', icon:'💫'}, edits:{label:'Edits / Rythme', icon:'🎬'},
+  gaming:{label:'Gaming / Speed', icon:'⚡'}, finance:{label:'Finance / Business', icon:'💰'},
+  beaute:{label:'Beauté / Mode', icon:'💄'}, sante:{label:'Santé / Fitness', icon:'💪'},
+  cuisine:{label:'Cuisine', icon:'🍽️'}, education:{label:'Éducation', icon:'📚'},
+  voyage:{label:'Voyage', icon:'✈️'}, tech:{label:'Tech / IA', icon:'🤖'},
+  musique:{label:'Musique / Dance', icon:'🎵'}, storytelling:{label:'Storytelling', icon:'🎭'},
+  spiritualite:{label:'Spiritualité', icon:'🌙'}, art:{label:'Art / DIY', icon:'🎨'},
+  satisfaisant:{label:'Satisfaisant / ASMR', icon:'😌'}, animaux:{label:'Animaux', icon:'🐾'},
+  autre:{label:'Autre / Non catégorisé', icon:'❓'},
+};
+const OBJECTIFS = {
+  vues:{label:'Plus de vues', icon:'👁️'}, abonnes:{label:"Plus d'abonnés", icon:'📈'},
+  ventes:{label:'Plus de ventes', icon:'💰'}, engagement:{label:"Plus d'engagement", icon:'💬'},
+};
+const NATCASH_RECEIVING = { number: '+509 4386-3832', name: 'Luvenson Milien' };
+const MONCASH_RECEIVING = { number: '+509 4777-9031', name: 'Luvenson Milien' };
+
+const state = {
+  route: 'login', user: null, token: null, showAuthModal: false, authMode: 'login',
+  wallet: { htg: 0, usd: 0 }, plan: { tier: 'free', expiresAt: null },
+  niche: 'motivation', objectif: 'vues', history: [], chat: [], walletTab: 'natcash',
+  uploadedProof: null, lastResult: null, analyzing: false, showUploadFallback: false,
+  tiktok: { linked: false, username: null, tier: null, uploadsCount: 0, linkRequired: false },
+  showTikTokModal: false, tiktokStep: 'form', tiktokPendingCode: null,
+};
+
+async function apiFetch(path, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  let body = null;
+  try { body = await res.json(); } catch (_) {}
+  if (!res.ok) {
+    const err = new Error(body?.error || `Erreur ${res.status}`);
+    err.status = res.status; err.body = body;
+    throw err;
+  }
+  return body;
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function fmtDate(d){ return new Date(d).toLocaleString('fr-FR', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}); }
+
+function go(route){
+  state.route = route; render(); window.scrollTo(0,0);
+  if((route === 'wallet' || route === 'plans') && state.token){ loadWalletAndPlan().then(render); }
+  if(route === 'profile' && state.token){ loadHistory().then(render); }
+}
+
+function consumeTikTokTokenFromHash(){
+  const m = window.location.hash.match(/tiktok_token=([^&]+)/);
+  if(m){
+    state.token = decodeURIComponent(m[1]);
+    history.replaceState(null, '', window.location.pathname);
+    return true;
+  }
+  return false;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  if(!state.user && !state.token){
+    app.innerHTML = renderAuth() + (state.showTikTokModal ? renderTikTokModal() : '');
+    bindAuth();
+    if(state.showTikTokModal) bindTikTokModal();
+    return;
+  }
+  if(state.token && !state.user){
+    bootstrapSession();
+    app.innerHTML = `<div class="login-wrap"><div style="color:var(--text-dim);">Connexion en cours…</div></div>`;
+    return;
+  }
+  app.innerHTML = `
+    ${renderTopbar()}
+    <main class="container">${renderView()}</main>
+    ${renderBottomNav()}
+    ${state.showTikTokModal ? renderTikTokModal() : ''}
+  `;
+  bindView();
+  if(state.showTikTokModal) bindTikTokModal();
+}
+
+async function bootstrapSession(){
+  try{
+    await loadWalletAndPlan();
+    await loadTikTokStatus();
+    state.user = { display_name: 'Créateur' };
+    seedChatWelcome();
+    go('home');
+  }catch(err){
+    toast(`Session invalide : ${err.message}`);
+    state.token = null;
+    go('login');
+  }
+}
+
+function renderAuth(){
+  return `
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <span style="font-size:34px;">🔥</span>
+        <div class="display" style="font-size:22px;font-weight:700;margin-top:6px;">Babolo</div>
+      </div>
+      <div class="card" style="padding:22px;">
+        <div class="auth-toggle">
+          <button data-mode="login" class="${state.authMode==='login'?'active':''}">Se connecter</button>
+          <button data-mode="register" class="${state.authMode==='register'?'active':''}">S'inscrire</button>
+        </div>
+
+        <button id="btn-tiktok" class="btn btn-white" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;">
+          🎵 Continuer avec TikTok
+        </button>
+        <div class="or-sep"><div class="line"></div>ou<div class="line"></div></div>
+
+        <form id="auth-form" style="display:flex;flex-direction:column;gap:10px;">
+          ${state.authMode==='register' ? `<input class="input" id="auth-name" placeholder="Ton nom" required>` : ''}
+          <input class="input" type="email" id="auth-email" placeholder="Adresse email" required>
+          <input class="input" type="password" id="auth-pass" placeholder="Mot de passe (6 caractères min.)" required minlength="6">
+          <button type="submit" class="btn btn-flame flame-ring" style="margin-top:4px;">
+            ${state.authMode==='register' ? "Créer mon compte" : "Se connecter"}
+          </button>
+        </form>
+
+        <button id="btn-dev-login" class="btn btn-ghost" style="width:100%;margin-top:10px;">🧪 Connexion mode test</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function bindAuth(){
+  document.querySelectorAll('.auth-toggle button').forEach(b=>{
+    b.onclick = ()=>{ state.authMode = b.dataset.mode; render(); };
+  });
+
+  document.getElementById('btn-tiktok').onclick = async ()=>{
+    try{
+      const data = await apiFetch('/api/v1/auth/tiktok/start');
+      window.location.href = data.authorize_url;
+    }catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+
+  document.getElementById('btn-dev-login').onclick = async ()=>{
+    try{
+      const data = await apiFetch('/api/v1/auth/dev-login', { method: 'POST' });
+      state.token = data.token;
+      toast('Connecté (mode test) 🔥');
+      render();
+    }catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+
+  document.getElementById('auth-form').onsubmit = async (e)=>{
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-pass').value;
+    const path = state.authMode === 'register' ? '/api/v1/auth/register' : '/api/v1/auth/login';
+    const payload = state.authMode === 'register'
+      ? { name: document.getElementById('auth-name').value, email, password }
+      : { email, password };
+    try{
+      const data = await apiFetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      state.token = data.token;
+      toast(state.authMode === 'register' ? 'Compte créé 🔥' : 'Connecté 🔥');
+      render();
+    }catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+}
+
+async function loadWalletAndPlan(){
+  const balance = await apiFetch('/api/v1/wallet/balance');
+  state.wallet.htg = Number(balance.balance_htg ?? 0);
+  state.wallet.usd = Number(balance.balance_usd ?? 0);
+  if (Number.isNaN(state.wallet.htg)) state.wallet.htg = 0;
+  if (Number.isNaN(state.wallet.usd)) state.wallet.usd = 0;
+}
+async function loadTikTokStatus(){
+  try{
+    const s = await apiFetch('/api/v1/account/tiktok-status');
+    state.tiktok = { linked: s.linked, username: s.username, tier: s.tier, uploadsCount: s.uploads_count, linkRequired: s.link_required };
+  }catch(err){ console.error('statut TikTok indisponible', err); }
+}
+async function loadHistory(){
+  try{
+    const data = await apiFetch('/api/v1/analyses?limit=20');
+    state.history = data.items || [];
+  }catch(err){ console.error('historique indisponible', err); }
+}
+function seedChatWelcome(){
+  if(state.chat.length) return;
+  state.chat = [{from:'support', text:"Bienvenue sur Babolo 👋 Un souci technique ou une recharge ? On est là.", ts: Date.now()}];
+}
+
+function renderTopbar(){
+  const initials = (state.user?.display_name || 'B').split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase();
+  return `
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="logo"><span>🔥</span> Babolo</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="wallet-pill" onclick="go('wallet')">💰 <span class="mono">${state.wallet.htg.toFixed(2)} HTG</span> <span style="color:var(--text-faint);">·</span> <span class="mono">$${state.wallet.usd.toFixed(2)}</span></button>
+        <div class="avatar">${initials}</div>
+      </div>
+    </div>
+  </header>`;
+}
+function renderBottomNav(){
+  const items = [
+    {id:'home', ic:'🏠', label:'Accueil'}, {id:'wallet', ic:'💼', label:'Wallet'},
+    {id:'plans', ic:'📦', label:'Plans'}, {id:'profile', ic:'👤', label:'Profil'}, {id:'chat', ic:'💬', label:'Support'},
+  ];
+  return `<nav class="bottomnav">${items.map(i=>`
+    <button class="navbtn ${state.route===i.id?'active':''}" onclick="go('${i.id}')"><span class="ic">${i.ic}</span>${i.label}</button>
+  `).join('')}</nav>`;
+}
+function renderView(){
+  switch(state.route){
+    case 'home': return renderHome();
+    case 'wallet': return renderWallet();
+    case 'plans': return renderPlans();
+    case 'profile': return renderProfile();
+    case 'chat': return renderChat();
+    default: return renderHome();
+  }
+}
+function bindView(){
+  if(state.route==='home') bindHomeExtras();
+  if(state.route==='wallet') bindWalletExtras();
+  if(state.route==='plans') bindPlansExtras();
+  if(state.route==='profile') bindProfileExtras();
+  if(state.route==='chat') bindChatExtras();
+}
+
+function openTikTokModal(){ state.showTikTokModal = true; state.tiktokStep = state.tiktokPendingCode ? 'verify' : 'form'; render(); }
+function closeTikTokModal(){ state.showTikTokModal = false; render(); }
+
+function renderTikTokModal(){
+  return `
+  <div class="modal-overlay" id="tiktok-modal-overlay">
+    <div class="modal-card-wrap">
+      <button class="modal-close" id="tiktok-modal-close">✕</button>
+      <div class="login-card">
+        <div class="login-logo">
+          <span style="font-size:32px;">🎵</span>
+          <div class="display" style="font-size:20px;font-weight:700;margin-top:6px;">Lier ton compte TikTok</div>
+          <div style="color:var(--text-dim);font-size:12.5px;margin-top:6px;">Pour comparer tes résultats à de vrais comptes de ta taille (benchmark), pas à une moyenne générique.</div>
+        </div>
+        <div class="card" style="padding:22px;">
+          ${state.tiktokStep === 'form' ? `
+            <form id="tiktok-link-form" style="display:flex;flex-direction:column;gap:10px;">
+              <input class="input" id="tiktok-username-input" placeholder="Ton pseudo TikTok (sans @)" required>
+              <button type="submit" class="btn btn-flame flame-ring">Continuer</button>
+            </form>
+          ` : `
+            <p style="font-size:13px;color:var(--text-dim);margin:0 0 10px;">Ajoute ce code dans ta bio TikTok, sauvegarde, puis confirme :</p>
+            <div class="card" style="padding:12px;text-align:center;margin-bottom:12px;">
+              <div class="mono" style="font-size:19px;font-weight:700;color:var(--hive-1);">${state.tiktokPendingCode || ''}</div>
+            </div>
+            <button type="button" class="btn btn-ghost" id="tiktok-copy-code" style="width:100%;margin-bottom:10px;">Copier le code</button>
+            <button type="button" id="tiktok-verify-btn" class="btn btn-flame flame-ring" style="width:100%;">J'ai ajouté le code, vérifier ✅</button>
+          `}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function bindTikTokModal(){
+  document.getElementById('tiktok-modal-close').onclick = closeTikTokModal;
+  document.getElementById('tiktok-modal-overlay').addEventListener('click', (e)=>{ if(e.target.id==='tiktok-modal-overlay') closeTikTokModal(); });
+  const form = document.getElementById('tiktok-link-form');
+  if(form) form.onsubmit = async (e)=>{
+    e.preventDefault();
+    const username = document.getElementById('tiktok-username-input').value.trim();
+    if(!username){ toast('Entre ton pseudo TikTok'); return; }
+    try{
+      const data = await apiFetch('/api/v1/account/link-tiktok', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username }) });
+      state.tiktokPendingCode = data.verification_code; state.tiktokStep = 'verify'; render();
+    }catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+  document.getElementById('tiktok-copy-code')?.addEventListener('click', ()=>{ navigator.clipboard?.writeText(state.tiktokPendingCode||''); toast('Code copié 📋'); });
+  const verifyBtn = document.getElementById('tiktok-verify-btn');
+  if(verifyBtn) verifyBtn.onclick = async ()=>{
+    try{
+      const data = await apiFetch('/api/v1/account/verify-tiktok', { method:'POST' });
+      if(data.verified){
+        state.tiktokPendingCode = null; await loadTikTokStatus(); state.showTikTokModal = false;
+        toast(`Compte lié 🔥 Palier : ${data.tier}`); render();
+      } else { toast('Code introuvable dans ta bio — vérifie et réessaie'); }
+    }catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+}
+
+function renderHome(){
+  const isPremium = state.plan.tier==='premium';
+  return `
+  <div style="display:flex;flex-direction:column;gap:22px;">
+    <div>
+      <h1 class="display" style="font-size:22px;margin:0 0 4px;">Salut ${(state.user?.display_name||'').split(' ')[0]||''} 👋</h1>
+      <p style="color:var(--text-dim);font-size:14px;margin:0;">Colle un lien vidéo (ou de profil pour un bilan de compte), choisis ta niche et ton objectif.</p>
+    </div>
+
+    ${!state.tiktok.linked ? `
+      <div class="card" style="padding:16px;background:rgba(255,212,0,.06);border-color:var(--hive-1);display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-weight:700;font-size:13.5px;">🎵 Lie ton compte TikTok</div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:3px;">${state.tiktok.uploadsCount >= 2 ? `Obligatoire dès ta prochaine analyse (déjà ${state.tiktok.uploadsCount} faites).` : `Pour des conseils comparés à de vrais comptes de ta taille.`}</div>
+        </div>
+        <button class="btn btn-flame flame-ring" style="padding:9px 16px;white-space:nowrap;" onclick="openTikTokModal()">Lier maintenant</button>
+      </div>
+    ` : `
+      <div class="card" style="padding:12px 16px;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);">
+        <span style="color:var(--lime);">✅</span> Compte lié : @${state.tiktok.username} · palier <b style="color:var(--hive-1);text-transform:uppercase;">${state.tiktok.tier}</b>
+      </div>
+    `}
+
+    <div class="card" style="padding:20px;">
+      <div class="tag" style="margin-bottom:10px;">Sélecteur de niche</div>
+      <div class="niche-chips" id="niche-grid">${Object.entries(NICHES).map(([key,n])=>`<button class="niche-chip ${state.niche===key?'selected':''}" data-niche="${key}">${n.icon} ${n.label}</button>`).join('')}</div>
+      <div style="margin-top:16px;">
+        <div class="tag" style="margin-bottom:8px;">Ton objectif principal</div>
+        <div class="niche-chips" id="objectif-grid">${Object.entries(OBJECTIFS).map(([key,o])=>`<button class="niche-chip ${state.objectif===key?'selected':''}" data-objectif="${key}">${o.icon} ${o.label}</button>`).join('')}</div>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="tag" style="margin-bottom:8px;">Lien vidéo ou profil TikTok</div>
+        <input class="input" id="video-link" placeholder="Lien vidéo -> analyse. Lien de profil (@pseudo) -> bilan de compte.">
+      </div>
+      <button id="analyze-btn" class="btn btn-flame flame-ring" style="width:100%;margin-top:16px;" ${state.analyzing?'disabled':''}>
+        ${state.analyzing ? '<span class="spinner"></span> Analyse en cours…' : '⚡ Analyser'}
+      </button>
+      <p style="font-size:12px;color:var(--text-faint);margin:8px 0 0;">${isPremium ? '✨ Premium actif — analyses illimitées.' : `Plan Free : 1 analyse par 48h. <a href="#" onclick="go('plans');return false;" style="color:var(--hive-1);font-weight:600;">Passer en Premium →</a>`}</p>
+      ${state.showUploadFallback ? `
+        <div class="notice" style="margin-top:14px;">🔒 Ce lien est temporairement indisponible. Téléverse directement le fichier vidéo :</div>
+        <div style="margin-top:10px;display:flex;gap:8px;">
+          <input type="file" id="upload-fallback-file" accept="video/*" class="input" style="padding:9px;">
+          <button id="upload-fallback-btn" class="btn btn-flame" style="white-space:nowrap;">Téléverser</button>
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="card" style="padding:20px;" id="result-card">${renderResultInner()}</div>
+  </div>`;
+}
+
+function renderResultInner(){
+  if(state.analyzing) return `<div class="tag" style="margin-bottom:10px;">Résultat</div><div style="color:var(--text-faint);font-size:13.5px;">🐝 Babolo travaille... (15-30s pour une vraie vidéo)</div>`;
+  if(!state.lastResult) return `<div class="tag" style="margin-bottom:10px;">Résultat</div><div style="color:var(--text-faint);font-size:13.5px;">Le résultat s'affichera ici après ton analyse. 🐝</div>`;
+  return state.lastResult.profile_link ? renderProfileResult(state.lastResult) : renderVideoResult(state.lastResult);
+}
+function scoreColor(pct){ if(pct>=70) return 'var(--lime)'; if(pct>=40) return 'var(--amber)'; return 'var(--danger)'; }
+
+function renderVideoResult(d){
+  const color = scoreColor(d.score_total);
+  const trendIcon = { up:'📈', down:'📉', stable:'➡️' };
+  return `
+    <div class="tag" style="margin-bottom:14px;">Résultat de l'analyse ${d.real_video_analysis?'· 🎬 vraie vidéo':''}</div>
+    <div class="gauge-wrap" style="margin-bottom:16px;">
+      <div class="gauge-circle" style="--pct:${d.score_total};--gauge-color:${color};"><div class="gauge-label" style="color:${color};">${d.score_total}%</div></div>
+      <div style="flex:1;">
+        <div class="subscore-row"><span>Hook</span><span>${d.score_hook}/40</span></div>
+        <div class="subscore-row"><span>Rythme</span><span>${d.score_rythme}/30</span></div>
+        <div class="subscore-row"><span>Niche</span><span>${d.score_niche}/30</span></div>
+      </div>
+    </div>
+    ${d.progression ? `<div class="progress-badge ${d.progression.score_trend}" style="margin-bottom:14px;">${trendIcon[d.progression.score_trend]} ${d.progression.score_delta>0?'+':''}${d.progression.score_delta} pts (${d.progression.previous_score}% → ${d.score_total}%)</div>` : ''}
+    ${d.niche_mismatch ? `<div class="mismatch-banner" style="margin-bottom:14px;">⚠️ <div><b>Niche différente détectée.</b> ${d.niche_mismatch_message||''}</div></div>` : ''}
+    <div class="feedback-block"><div class="feedback-title">🪝 Accroche ${d.hook_timestamp?`<span class="feedback-timestamp">${d.hook_timestamp}</span>`:''}</div><div class="feedback-text">${d.hook_feedback}</div><div class="feedback-suggestion">${d.hook_suggestion}</div></div>
+    <div class="feedback-block"><div class="feedback-title">✂️ Rétention ${d.retention_timestamp?`<span class="feedback-timestamp">${d.retention_timestamp}</span>`:''}</div><div class="feedback-text">${d.retention_feedback}</div><div class="feedback-suggestion">${d.retention_suggestion}</div></div>
+    <div class="feedback-block"><div class="feedback-title">💬 Engagement</div><div class="feedback-text">${d.engagement_action}</div></div>
+    <div class="feedback-block">
+      <div class="feedback-title">#️⃣ Légende & hashtags</div>
+      <div class="caption-tabs"><button class="caption-tab-btn active" data-cap="fr">Français</button><button class="caption-tab-btn" data-cap="creole">Kreyòl</button></div>
+      <div id="caption-content" class="feedback-text" style="margin-bottom:0;">${d.caption_fr}</div>
+      <div class="hashtag-chips">${[...d.hashtags_larges,...d.hashtags_niche,...d.hashtags_specifique].map(h=>`<span class="hashtag-chip">${h}</span>`).join('')}</div>
+    </div>
+    <div class="feedback-block" style="border-bottom:none;">
+      <div class="feedback-title">🎯 Simulation algorithme <span style="font-weight:400;font-size:10.5px;color:var(--text-faint);">(estimation IA)</span></div>
+      <div class="sim-grid">
+        <div class="sim-item"><div class="sim-val">${d.estimation_vues_min}-${d.estimation_vues_max}</div><div class="sim-label">VUES</div>${d.progression?.vues_delta_pct!=null?`<div class="sim-delta ${d.progression.vues_delta_pct>=0?'up':'down'}">${d.progression.vues_delta_pct>=0?'+':''}${d.progression.vues_delta_pct.toFixed(0)}%</div>`:''}</div>
+        <div class="sim-item"><div class="sim-val">${d.estimation_likes_min}-${d.estimation_likes_max}</div><div class="sim-label">LIKES</div>${d.progression?.likes_delta_pct!=null?`<div class="sim-delta ${d.progression.likes_delta_pct>=0?'up':'down'}">${d.progression.likes_delta_pct>=0?'+':''}${d.progression.likes_delta_pct.toFixed(0)}%</div>`:''}</div>
+        <div class="sim-item"><div class="sim-val">${d.estimation_commentaires_min}-${d.estimation_commentaires_max}</div><div class="sim-label">COMMENTAIRES</div>${d.progression?.commentaires_delta_pct!=null?`<div class="sim-delta ${d.progression.commentaires_delta_pct>=0?'up':'down'}">${d.progression.commentaires_delta_pct>=0?'+':''}${d.progression.commentaires_delta_pct.toFixed(0)}%</div>`:''}</div>
+        <div class="sim-item"><div class="sim-val">${d.estimation_partages_min}-${d.estimation_partages_max}</div><div class="sim-label">PARTAGES</div>${d.progression?.partages_delta_pct!=null?`<div class="sim-delta ${d.progression.partages_delta_pct>=0?'up':'down'}">${d.progression.partages_delta_pct>=0?'+':''}${d.progression.partages_delta_pct.toFixed(0)}%</div>`:''}</div>
+      </div>
+    </div>`;
+}
+function renderProfileResult(d){
+  return `
+    <div class="tag" style="margin-bottom:14px;">🐝 Bilan de profil · ${d.videos_analysed} vidéos analysées</div>
+    <div class="feedback-block"><div class="feedback-title">🎯 Niche dominante</div><div class="feedback-text">${d.niche_dominante_detectee}</div></div>
+    <div class="feedback-block"><div class="feedback-title">🎨 Cohérence de branding</div><div class="feedback-text">${d.coherence_branding}</div></div>
+    <div class="feedback-block"><div class="feedback-title">📅 Fréquence de publication</div><div class="feedback-text">${d.frequence_observation}</div></div>
+    <div class="feedback-block"><div class="feedback-title">✅ Points forts</div><ul class="profile-list">${d.points_forts.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="feedback-block"><div class="feedback-title">⚠️ Points faibles</div><ul class="profile-list">${d.points_faibles.map(p=>`<li>${p}</li>`).join('')}</ul></div>
+    <div class="feedback-block" style="border-bottom:none;"><div class="feedback-title">🚀 Recommandation</div><div class="feedback-suggestion">${d.recommandation_principale}</div></div>`;
+}
+
+function bindHomeExtras(){
+  document.querySelectorAll('#niche-grid .niche-chip').forEach(btn=>{ btn.onclick = ()=>{ state.niche = btn.dataset.niche; render(); }; });
+  document.querySelectorAll('#objectif-grid .niche-chip').forEach(btn=>{ btn.onclick = ()=>{ state.objectif = btn.dataset.objectif; render(); }; });
+  const analyzeBtn = document.getElementById('analyze-btn');
+  if(analyzeBtn) analyzeBtn.onclick = handleAnalyze;
+  document.querySelectorAll('.caption-tab-btn').forEach(btn=>{
+    btn.onclick = ()=>{
+      document.querySelectorAll('.caption-tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('caption-content').textContent = btn.dataset.cap==='fr' ? state.lastResult.caption_fr : state.lastResult.caption_creole;
+    };
+  });
+  const uploadBtn = document.getElementById('upload-fallback-btn');
+  if(uploadBtn) uploadBtn.onclick = handleUploadFallback;
+}
+
+async function handleAnalyze(){
+  const link = document.getElementById('video-link').value.trim();
+  if(!link){ toast('Colle un lien avant d\'analyser 🔗'); return; }
+  state.analyzing = true; state.showUploadFallback = false; render();
+  try{
+    const data = await apiFetch('/api/v1/analyses', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ niche: state.niche, objectif: state.objectif, video_link: link }) });
+    state.lastResult = data;
+    toast(data.profile_link ? 'Bilan de profil prêt 🐝' : 'Analyse terminée 🔥');
+    loadTikTokStatus();
+  }catch(err){
+    if(err.status===422 && err.body?.code==='URL_UNAVAILABLE'){ state.showUploadFallback = true; toast('Lien indisponible — essaie l\'upload direct 📎'); }
+    else if(err.status===429){ const secs=err.body?.retry_after_seconds||0; const h=Math.floor(secs/3600), m=Math.ceil((secs%3600)/60); toast(`🔒 Limite atteinte, réessaie dans ${h}h${String(m).padStart(2,'0')}`); }
+    else if(err.status===409 && err.body?.code==='TIKTOK_LINK_REQUIRED'){ toast('Lie ton compte TikTok pour continuer 🎵'); state.analyzing=false; openTikTokModal(); return; }
+    else { toast(`Erreur : ${err.message}`); }
+  }finally{ state.analyzing = false; render(); }
+}
+async function handleUploadFallback(){
+  const file = document.getElementById('upload-fallback-file')?.files?.[0];
+  if(!file){ toast('Choisis un fichier vidéo d\'abord'); return; }
+  try{
+    const form = new FormData(); form.append('niche', state.niche); form.append('objectif', state.objectif); form.append('video', file);
+    const data = await apiFetch('/api/v1/analyses/upload', { method:'POST', body: form });
+    state.lastResult = data; state.showUploadFallback = false; toast('Analyse terminée 🔥'); loadTikTokStatus();
+  }catch(err){ toast(`Échec upload : ${err.message}`); }
+  finally{ render(); }
+}
+
+function renderWallet(){
+  return `
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <h1 class="display" style="font-size:22px;margin:0;">Portefeuille</h1>
+    <div class="card flame-ring" style="padding:22px;">
+      <div class="tag">Solde disponible</div>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;margin-top:8px;">
+        <div><div class="balance-num">${state.wallet.htg.toFixed(2)}</div><div class="tag">HTG</div></div>
+        <div><div class="balance-num">$${state.wallet.usd.toFixed(2)}</div><div class="tag">USD</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:18px;">
+      <div class="tabbar">
+        <button class="tabbtn ${state.walletTab==='natcash'?'active':''}" data-tab="natcash">Natcash</button>
+        <button class="tabbtn ${state.walletTab==='moncash'?'active':''}" data-tab="moncash">MonCash</button>
+        <button class="tabbtn ${state.walletTab==='usdt'?'active':''}" data-tab="usdt">USDT</button>
+      </div>
+      <div style="margin-top:18px;">
+        ${state.walletTab==='natcash' ? renderDepositTab('natcash_proof', NATCASH_RECEIVING) : ''}
+        ${state.walletTab==='moncash' ? renderDepositTab('moncash_proof', MONCASH_RECEIVING) : ''}
+        ${state.walletTab==='usdt' ? renderUsdtTab() : ''}
+      </div>
+    </div>
+  </div>`;
+}
+function renderDepositTab(method, receiving){
+  return `
+  <div class="card" style="padding:16px;margin-bottom:14px;background:rgba(255,212,0,.06);border-color:var(--hive-1);">
+    <div class="tag" style="margin-bottom:8px;">📲 Envoie ton paiement à ce numéro</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div><div class="mono" style="font-size:17px;font-weight:700;color:var(--hive-1);">${receiving.number}</div><div style="font-size:12.5px;color:var(--text-dim);">${receiving.name}</div></div>
+      <button type="button" class="btn btn-ghost copy-recv-btn" data-number="${receiving.number}" style="padding:8px 12px;font-size:12px;">Copier</button>
+    </div>
+  </div>
+  <form class="deposit-form" data-method="${method}" style="display:flex;flex-direction:column;gap:12px;">
+    <input class="input dep-amount" placeholder="Montant (HTG)" type="number" min="1" required>
+    <input class="input dep-sender" placeholder="Numéro émetteur" required>
+    <div class="grid2">
+      <label class="niche-chip" style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="radio" name="origin-${method}" value="numero" checked> Mon numéro</label>
+      <label class="niche-chip" style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="radio" name="origin-${method}" value="agent"> Agent/boutique</label>
+    </div>
+    <textarea class="input dep-note" rows="2" placeholder="Note (optionnel)"></textarea>
+    <div class="dropzone" data-dz="${method}"><input type="file" class="dep-proof-file" accept="image/*" style="display:none;"><div class="dz-label">📎 Ajouter une capture d'écran</div></div>
+    <button type="submit" class="btn btn-flame flame-ring">Déclarer le dépôt</button>
+  </form>`;
+}
+function renderUsdtTab(){
+  return `<div style="display:flex;flex-direction:column;gap:14px;align-items:center;text-align:center;">
+    <div class="qr"><div style="font-size:11px;color:#111;padding:8px;">[QR code]</div></div>
+    <div class="card" style="padding:10px 14px;width:100%;"><div class="mono" style="font-size:12.5px;word-break:break-all;color:var(--text-dim);">Adresse à configurer par l'admin</div></div>
+    <p style="font-size:11.5px;color:var(--text-faint);margin:0;">Vérification manuelle par l'équipe Babolo.</p>
+  </div>`;
+}
+function bindWalletExtras(){
+  document.querySelectorAll('.tabbar .tabbtn[data-tab]').forEach(btn=>{ btn.onclick = ()=>{ state.walletTab = btn.dataset.tab; render(); }; });
+  document.querySelectorAll('.copy-recv-btn').forEach(btn=>{ btn.onclick = ()=>{ navigator.clipboard?.writeText(btn.dataset.number); toast('Numéro copié 📋'); }; });
+  document.querySelectorAll('.dropzone').forEach(dz=>{
+    const input = dz.querySelector('.dep-proof-file');
+    dz.onclick = ()=> input.click();
+    input.onchange = ()=>{ if(input.files[0]){ dz.classList.add('has-file'); dz.querySelector('.dz-label').textContent = `✅ ${input.files[0].name}`; } };
+  });
+  document.querySelectorAll('.deposit-form').forEach(form=>{
+    form.onsubmit = async (e)=>{
+      e.preventDefault();
+      const method = form.dataset.method;
+      const proofInput = form.querySelector('.dep-proof-file');
+      const fd = new FormData();
+      fd.append('amount', form.querySelector('.dep-amount').value);
+      fd.append('sender_number', form.querySelector('.dep-sender').value);
+      fd.append('origin', form.querySelector(`input[name="origin-${method}"]:checked`).value);
+      fd.append('note', form.querySelector('.dep-note').value);
+      if(proofInput.files[0]) fd.append('proof', proofInput.files[0]);
+      try{
+        await apiFetch('/api/v1/deposits', { method:'POST', body: fd });
+        toast('Déclaration envoyée — vérification manuelle en cours ⏳');
+        form.reset();
+      }catch(err){ toast(`Erreur : ${err.message}`); }
+    };
+  });
+}
+
+function renderPlans(){
+  const isPremium = state.plan.tier==='premium';
+  return `
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <h1 class="display" style="font-size:22px;margin:0;">Choisis ton plan</h1>
+    <div class="grid2">
+      <div class="card" style="padding:22px;">
+        <div class="badge-free">${!isPremium?'Plan actuel':'Free'}</div>
+        <h3 style="margin:12px 0 2px;font-size:19px;">Free</h3>
+        <ul style="margin:12px 0 0;padding:0 0 0 18px;font-size:13.5px;color:var(--text-dim);">
+          <li>1 analyse / 48h</li><li>File d'attente standard</li>
+        </ul>
+      </div>
+      <div class="card flame-ring" style="padding:22px;">
+        <div class="badge-premium">${isPremium?'Plan actuel':'Recommandé'}</div>
+        <h3 style="margin:12px 0 2px;font-size:19px;" class="flame-text">Premium</h3>
+        <p style="color:var(--text-dim);font-size:13px;margin:0 0 4px;">1000 HTG / mois — ou $5 USD</p>
+        <ul style="margin:12px 0 18px;padding:0 0 0 18px;font-size:13.5px;">
+          <li>Analyses illimitées</li><li>Prompts prioritaires</li>
+        </ul>
+        ${isPremium ? `<button class="btn btn-ghost" style="width:100%;" disabled>✨ Premium actif</button>` : `<button id="activate-premium" class="btn btn-flame flame-ring" style="width:100%;">Activer le Premium</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+function bindPlansExtras(){
+  const btn = document.getElementById('activate-premium');
+  if(!btn) return;
+  btn.onclick = async ()=>{
+    btn.disabled = true; btn.innerHTML = `<span class="spinner"></span>`;
+    try{
+      const data = await apiFetch('/api/v1/wallet/subscribe-premium', { method:'POST' });
+      state.plan.tier = 'premium'; state.plan.expiresAt = new Date(data.expires_at).getTime();
+      await loadWalletAndPlan(); toast(`Premium activé 🔥 (${data.charged_currency})`); render();
+    }catch(err){
+      if(err.status===402){ toast('Solde insuffisant'); go('wallet'); }
+      else { toast(`Erreur : ${err.message}`); btn.disabled=false; btn.innerHTML='Activer le Premium'; }
+    }
+  };
+}
+
+function renderProfile(){
+  const isPremium = state.plan.tier==='premium';
+  return `
+  <div style="display:flex;flex-direction:column;gap:20px;">
+    <h1 class="display" style="font-size:22px;margin:0;">Profil</h1>
+    <div class="card" style="padding:20px;"><div style="font-weight:700;font-size:16px;">${state.user?.display_name||'Créateur'}</div></div>
+    <div class="card" style="padding:20px;">
+      <div class="tag" style="margin-bottom:10px;">Statut du compte</div>
+      ${isPremium ? `<span class="badge-premium">Premium</span>` : `<span class="badge-free">Free</span>`}
+      ${!isPremium ? `<button class="btn btn-flame flame-ring" style="margin-top:14px;display:block;" onclick="go('plans')">Passer au Premium</button>` : ''}
+    </div>
+    <div class="card" style="padding:20px;">
+      <div class="tag" style="margin-bottom:10px;">Compte TikTok</div>
+      ${state.tiktok.linked ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div><div style="font-size:13.5px;font-weight:600;">@${state.tiktok.username}</div><div style="font-size:12px;color:var(--text-dim);">Palier <b style="color:var(--hive-1);text-transform:uppercase;">${state.tiktok.tier}</b></div></div>
+          <button class="btn btn-ghost" id="tiktok-unlink-btn" style="padding:8px 12px;font-size:12px;">Délier</button>
+        </div>` : `<button class="btn btn-flame flame-ring" onclick="openTikTokModal()">Lier mon compte TikTok</button>`}
+    </div>
+    <div class="card" style="padding:20px;">
+      <div class="tag" style="margin-bottom:6px;">Historique des analyses</div>
+      ${state.history.length===0 ? `<p style="color:var(--text-faint);font-size:13.5px;">Aucune analyse pour le moment.</p>` :
+        state.history.map(h=>`<div class="hist-item">
+          <div style="display:flex;justify-content:space-between;gap:10px;">
+            <span style="font-weight:600;font-size:13.5px;">${NICHES[h.niche]?.icon||'❓'} ${NICHES[h.niche]?.label||h.niche}</span>
+            <span class="mono" style="font-size:11.5px;color:var(--text-faint);">${fmtDate(h.created_at)}</span>
+          </div>
+          <div style="font-size:12.5px;color:var(--text-dim);margin-top:4px;word-break:break-all;">${h.video_link}</div>
+          ${h.score_global!=null ? `<div style="font-size:13px;color:var(--hive-1);margin-top:6px;font-weight:700;">${h.score_global}%</div>` : ''}
+        </div>`).join('')}
+    </div>
+    <button class="btn btn-ghost" id="logout-btn">Se déconnecter</button>
+  </div>`;
+}
+function bindProfileExtras(){
+  document.getElementById('logout-btn').onclick = ()=>{ state.user=null; state.token=null; go('login'); };
+  const unlinkBtn = document.getElementById('tiktok-unlink-btn');
+  if(unlinkBtn) unlinkBtn.onclick = async ()=>{
+    try{ await apiFetch('/api/v1/account/tiktok-link', { method:'DELETE' }); await loadTikTokStatus(); toast('Compte TikTok délié'); render(); }
+    catch(err){ toast(`Erreur : ${err.message}`); }
+  };
+}
+
+function renderChat(){
+  return `<div style="display:flex;flex-direction:column;gap:16px;">
+    <h1 class="display" style="font-size:22px;margin:0;">Support</h1>
+    <div class="card" style="padding:18px;">
+      <div class="chat-scroll" id="chat-scroll">${state.chat.map(m=>`<div class="bubble ${m.from==='me'?'me':'support'}">${m.text}</div>`).join('')}</div>
+      <form id="chat-form" style="display:flex;gap:8px;margin-top:10px;"><input class="input" id="chat-input" placeholder="Écris ton message…"><button class="btn btn-flame" type="submit">➤</button></form>
+    </div>
+  </div>`;
+}
+function bindChatExtras(){
+  document.getElementById('chat-form').onsubmit = async (e)=>{
+    e.preventDefault();
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if(!text) return;
+    state.chat.push({from:'me', text}); input.value=''; renderChatOnly();
+    try{
+      await apiFetch('/api/v1/support/tickets', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: text }) });
+      setTimeout(()=>{ state.chat.push({from:'support', text:"Reçu ! Notre équipe te répond sous peu 🙌"}); renderChatOnly(); }, 800);
+    }catch(err){ toast(`Erreur envoi : ${err.message}`); }
+  };
+}
+function renderChatOnly(){
+  const scroll = document.getElementById('chat-scroll');
+  scroll.innerHTML = state.chat.map(m=>`<div class="bubble ${m.from==='me'?'me':'support'}">${m.text}</div>`).join('');
+  scroll.scrollTop = scroll.scrollHeight;
+}
+
+consumeTikTokTokenFromHash();
+render();
+</script>
+</body>
+</html>
