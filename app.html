@@ -256,7 +256,13 @@ function renderAuth(){
         <form id="auth-form" style="display:flex;flex-direction:column;gap:10px;">
           ${state.authMode==='register' ? `<input class="input" id="auth-name" placeholder="Ton nom" required>` : ''}
           <input class="input" type="email" id="auth-email" placeholder="Adresse email" required>
-          <input class="input" type="password" id="auth-pass" placeholder="Mot de passe (6 caractères min.)" required minlength="6">
+          <div style="position:relative;">
+            <input class="input" type="password" id="auth-pass" placeholder="Mot de passe (6 caractères min.)" required minlength="6" style="padding-right:44px;">
+            <button type="button" id="toggle-pass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-faint);font-size:16px;padding:4px;">👁️</button>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">
+            <input type="checkbox" id="remember-me"> Se souvenir de moi
+          </label>
           <button type="submit" class="btn btn-flame flame-ring" style="margin-top:4px;">
             ${state.authMode==='register' ? "Créer mon compte" : "Se connecter"}
           </button>
@@ -289,6 +295,10 @@ function bindAuth(){
     }catch(err){ toast(`Erreur : ${err.message}`); }
   };
 
+  document.getElementById('toggle-pass').onclick = ()=>{
+    const p = document.getElementById('auth-pass');
+    p.type = p.type === 'password' ? 'text' : 'password';
+  };
   document.getElementById('auth-form').onsubmit = async (e)=>{
     e.preventDefault();
     const email = document.getElementById('auth-email').value;
@@ -300,6 +310,7 @@ function bindAuth(){
     try{
       const data = await apiFetch(path, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
       state.token = data.token;
+      if(document.getElementById('remember-me').checked){ localStorage.setItem('babolo_token', data.token); }
       toast(state.authMode === 'register' ? 'Compte créé 🔥' : 'Connecté 🔥');
       render();
     }catch(err){ toast(`Erreur : ${err.message}`); }
@@ -463,6 +474,11 @@ function renderHome(){
         <div class="tag" style="margin-bottom:8px;">Lien vidéo ou profil TikTok</div>
         <input class="input" id="video-link" placeholder="Lien vidéo -> analyse. Lien de profil (@pseudo) -> bilan de compte.">
       </div>
+      <div style="margin-top:12px;text-align:center;color:var(--text-faint);font-size:12px;">— ou —</div>
+      <div style="margin-top:12px;">
+        <div class="tag" style="margin-bottom:8px;">Téléverser directement un fichier vidéo</div>
+        <input type="file" id="direct-video-file" accept="video/*" class="input" style="padding:9px;">
+      </div>
       <button id="analyze-btn" class="btn btn-flame flame-ring" style="width:100%;margin-top:16px;" ${state.analyzing?'disabled':''}>
         ${state.analyzing ? '<span class="spinner"></span> Analyse en cours…' : '⚡ Analyser'}
       </button>
@@ -550,10 +566,17 @@ function bindHomeExtras(){
 
 async function handleAnalyze(){
   const link = document.getElementById('video-link').value.trim();
-  if(!link){ toast('Colle un lien avant d\'analyser 🔗'); return; }
+  const file = document.getElementById('direct-video-file')?.files?.[0];
+  if(!link && !file){ toast('Colle un lien ou choisis un fichier vidéo 🔗'); return; }
   state.analyzing = true; state.showUploadFallback = false; render();
   try{
-    const data = await apiFetch('/api/v1/analyses', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ niche: state.niche, objectif: state.objectif, video_link: link }) });
+    let data;
+    if(file){
+      const form = new FormData(); form.append('niche', state.niche); form.append('objectif', state.objectif); form.append('video', file);
+      data = await apiFetch('/api/v1/analyses/upload', { method:'POST', body: form });
+    } else {
+      data = await apiFetch('/api/v1/analyses', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ niche: state.niche, objectif: state.objectif, video_link: link }) });
+    }
     state.lastResult = data;
     toast(data.profile_link ? 'Bilan de profil prêt 🐝' : 'Analyse terminée 🔥');
     loadTikTokStatus();
@@ -732,7 +755,7 @@ function renderProfile(){
   </div>`;
 }
 function bindProfileExtras(){
-  document.getElementById('logout-btn').onclick = ()=>{ state.user=null; state.token=null; go('login'); };
+  document.getElementById('logout-btn').onclick = ()=>{ state.user=null; state.token=null; localStorage.removeItem('babolo_token'); go('login'); };
   const unlinkBtn = document.getElementById('tiktok-unlink-btn');
   if(unlinkBtn) unlinkBtn.onclick = async ()=>{
     try{ await apiFetch('/api/v1/account/tiktok-link', { method:'DELETE' }); await loadTikTokStatus(); toast('Compte TikTok délié'); render(); }
@@ -769,6 +792,7 @@ function renderChatOnly(){
 }
 
 consumeTikTokTokenFromHash();
+if(!state.token){ const saved = localStorage.getItem('babolo_token'); if(saved) state.token = saved; }
 render();
 </script>
 </body>
