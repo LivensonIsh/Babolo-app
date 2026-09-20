@@ -157,6 +157,7 @@ const state = {
   uploadedProof: null, lastResult: null, analyzing: false, showUploadFallback: false,
   tiktok: { linked: false, username: null, tier: null, uploadsCount: 0, linkRequired: false },
   showTikTokModal: false, tiktokStep: 'form', tiktokPendingCode: null,
+  showNicheModal: false,
 };
 
 async function apiFetch(path, options = {}) {
@@ -215,9 +216,11 @@ function render(){
     <main class="container">${renderView()}</main>
     ${renderBottomNav()}
     ${state.showTikTokModal ? renderTikTokModal() : ''}
+    ${state.showNicheModal ? renderNicheModal() : ''}
   `;
   bindView();
   if(state.showTikTokModal) bindTikTokModal();
+  if(state.showNicheModal) bindNicheModal();
 }
 
 async function bootstrapSession(){
@@ -440,6 +443,35 @@ function bindTikTokModal(){
   };
 }
 
+function openNicheModal(){ state.showNicheModal = true; render(); }
+function closeNicheModal(){ state.showNicheModal = false; render(); }
+
+function renderNicheModal(){
+  return `
+  <div class="modal-overlay" id="niche-modal-overlay">
+    <div class="modal-card-wrap">
+      <button class="modal-close" id="niche-modal-close">✕</button>
+      <div class="card" style="padding:16px;max-height:70vh;overflow-y:auto;">
+        <div class="tag" style="margin-bottom:12px;">Choisis ta niche</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${Object.entries(NICHES).map(([key,n])=>`
+            <button type="button" class="niche-modal-item" data-niche="${key}" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;border:1px solid ${state.niche===key?'var(--hive-1)':'var(--border)'};background:${state.niche===key?'rgba(255,212,0,.08)':'var(--bg-elev-2)'};color:${state.niche===key?'var(--hive-2)':'var(--text)'};font-size:13.5px;font-weight:600;text-align:left;">
+              <span style="font-size:16px;">${n.icon}</span> ${n.label}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function bindNicheModal(){
+  document.getElementById('niche-modal-close').onclick = closeNicheModal;
+  document.getElementById('niche-modal-overlay').addEventListener('click', (e)=>{ if(e.target.id==='niche-modal-overlay') closeNicheModal(); });
+  document.querySelectorAll('.niche-modal-item').forEach(btn=>{
+    btn.onclick = ()=>{ state.niche = btn.dataset.niche; state.showNicheModal = false; render(); };
+  });
+}
+
 function renderHome(){
   const isPremium = state.plan.tier==='premium';
   return `
@@ -464,8 +496,11 @@ function renderHome(){
     `}
 
     <div class="card" style="padding:20px;">
-      <div class="tag" style="margin-bottom:10px;">Sélecteur de niche</div>
-      <div class="niche-chips" id="niche-grid">${Object.entries(NICHES).map(([key,n])=>`<button class="niche-chip ${state.niche===key?'selected':''}" data-niche="${key}">${n.icon} ${n.label}</button>`).join('')}</div>
+      <div class="tag" style="margin-bottom:10px;">Niche</div>
+      <button type="button" id="niche-selector-btn" class="input" style="display:flex;align-items:center;justify-content:space-between;text-align:left;cursor:pointer;">
+        <span>${NICHES[state.niche].icon} ${NICHES[state.niche].label}</span>
+        <span style="color:var(--text-faint);">▾</span>
+      </button>
       <div style="margin-top:16px;">
         <div class="tag" style="margin-bottom:8px;">Ton objectif principal</div>
         <div class="niche-chips" id="objectif-grid">${Object.entries(OBJECTIFS).map(([key,o])=>`<button class="niche-chip ${state.objectif===key?'selected':''}" data-objectif="${key}">${o.icon} ${o.label}</button>`).join('')}</div>
@@ -549,7 +584,7 @@ function renderProfileResult(d){
 }
 
 function bindHomeExtras(){
-  document.querySelectorAll('#niche-grid .niche-chip').forEach(btn=>{ btn.onclick = ()=>{ state.niche = btn.dataset.niche; render(); }; });
+  document.getElementById('niche-selector-btn').onclick = ()=>{ state.showNicheModal = true; render(); };
   document.querySelectorAll('#objectif-grid .niche-chip').forEach(btn=>{ btn.onclick = ()=>{ state.objectif = btn.dataset.objectif; render(); }; });
   const analyzeBtn = document.getElementById('analyze-btn');
   if(analyzeBtn) analyzeBtn.onclick = handleAnalyze;
