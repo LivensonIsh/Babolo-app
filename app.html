@@ -272,6 +272,7 @@ function renderAuth(){
         </form>
 
         <button id="btn-dev-login" class="btn btn-ghost" style="width:100%;margin-top:10px;">🧪 Connexion mode test</button>
+        <p style="text-align:center;font-size:11.5px;color:var(--text-faint);margin-top:16px;"><a href="/terms.html" target="_blank">Conditions</a> · <a href="/privacy.html" target="_blank">Confidentialité</a></p>
       </div>
     </div>
   </div>`;
@@ -703,6 +704,7 @@ function bindWalletExtras(){
       const method = form.dataset.method;
       const proofInput = form.querySelector('.dep-proof-file');
       const fd = new FormData();
+      fd.append('method', method);
       fd.append('amount', form.querySelector('.dep-amount').value);
       fd.append('sender_number', form.querySelector('.dep-sender').value);
       fd.append('origin', form.querySelector(`input[name="origin-${method}"]:checked`).value);

@@ -293,7 +293,7 @@ async function renderDeposits(){
                 <td><span class="badge badge-pending">${d.method}</span></td>
                 <td class="mono">${d.amount_htg ? Number(d.amount_htg).toFixed(2)+' HTG' : '—'}</td>
                 <td>${d.sender_number || '—'}</td>
-                <td>${d.proof_path ? '📎 fichier joint' : '—'}</td>
+                <td>${d.proof_path ? `<button class="btn btn-sm" data-action="view-proof" data-id="${d.id}">📎 Voir</button>` : '—'}</td>
                 <td>
                   <div class="btn-row">
                     <button class="btn btn-sm btn-mauve" data-action="approve" data-id="${d.id}">Approuver</button>
@@ -307,6 +307,16 @@ async function renderDeposits(){
         ${deposits.length===0 ? '<div class="empty-state">Aucun dépôt en attente 🎉</div>' : ''}
       </div>
     `;
+    el.querySelectorAll('[data-action="view-proof"]').forEach(btn => {
+      btn.onclick = async () => {
+        try{
+          const res = await fetch(`${API_BASE}/api/v1/admin/deposits/${btn.dataset.id}/proof`, { headers: { 'Authorization': `Bearer ${state.token}` } });
+          if(!res.ok) throw new Error('Impossible de charger la preuve');
+          const blob = await res.blob();
+          window.open(URL.createObjectURL(blob), '_blank');
+        }catch(err){ toast(`Erreur : ${err.message}`); }
+      };
+    });
     el.querySelectorAll('[data-action="approve"]').forEach(btn => {
       btn.onclick = async () => {
         if (!confirm('Approuver ce dépôt et créditer le wallet ?')) return;
