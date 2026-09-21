@@ -326,6 +326,9 @@ async function loadWalletAndPlan(){
   state.wallet.usd = Number(balance.balance_usd ?? 0);
   if (Number.isNaN(state.wallet.htg)) state.wallet.htg = 0;
   if (Number.isNaN(state.wallet.usd)) state.wallet.usd = 0;
+  const sub = await apiFetch('/api/v1/subscription/status');
+  state.plan.tier = sub.tier;
+  state.plan.expiresAt = sub.expires_at ? new Date(sub.expires_at).getTime() : null;
 }
 async function loadTikTokStatus(){
   try{
