@@ -737,7 +737,7 @@ function renderPlans(){
         <ul style="margin:12px 0 18px;padding:0 0 0 18px;font-size:13.5px;">
           <li>Analyses illimitées</li><li>Prompts prioritaires</li>
         </ul>
-        ${isPremium ? `<button class="btn btn-ghost" style="width:100%;" disabled>✨ Premium actif</button>` : `<button id="activate-premium" class="btn btn-flame flame-ring" style="width:100%;">Activer le Premium</button>`}
+        ${isPremium ? `<button class="btn btn-ghost" style="width:100%;" disabled>✨ Premium actif${state.plan.expiresAt ? ' — ' + Math.max(0, Math.ceil((state.plan.expiresAt - Date.now())/86400000)) + ' jour(s) restant(s)' : ''}</button>` : `<button id="activate-premium" class="btn btn-flame flame-ring" style="width:100%;">Activer le Premium</button>`}
       </div>
     </div>
   </div>`;
