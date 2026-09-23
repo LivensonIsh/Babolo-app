@@ -623,6 +623,7 @@ async function handleAnalyze(){
     if(err.status===422 && err.body?.code==='URL_UNAVAILABLE'){ state.showUploadFallback = true; toast('Lien indisponible — essaie l\'upload direct 📎'); }
     else if(err.status===429){ const secs=err.body?.retry_after_seconds||0; const h=Math.floor(secs/3600), m=Math.ceil((secs%3600)/60); toast(`🔒 Limite atteinte, réessaie dans ${h}h${String(m).padStart(2,'0')}`); }
     else if(err.status===409 && err.body?.code==='TIKTOK_LINK_REQUIRED'){ toast('Lie ton compte TikTok pour continuer 🎵'); state.analyzing=false; openTikTokModal(); return; }
+    else if(err.status===500){ toast('🐝 IA temporairement surchargée — réessaie dans une minute'); }
     else { toast(`Erreur : ${err.message}`); }
   }finally{ state.analyzing = false; render(); }
 }
