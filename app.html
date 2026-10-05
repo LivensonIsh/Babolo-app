@@ -225,9 +225,10 @@ function render(){
 
 async function bootstrapSession(){
   try{
+    const me = await apiFetch('/api/v1/auth/me');
+    state.user = { display_name: me.tiktok_username ? '@' + me.tiktok_username : me.display_name, email: me.email };
     await loadWalletAndPlan();
     await loadTikTokStatus();
-    state.user = { display_name: 'Créateur' };
     seedChatWelcome();
     go('home');
   }catch(err){
