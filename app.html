@@ -158,6 +158,7 @@ const state = {
   tiktok: { linked: false, username: null, tier: null, uploadsCount: 0, linkRequired: false },
   showTikTokModal: false, tiktokStep: 'form', tiktokPendingCode: null,
   showNicheModal: false,
+  showForgotPass: false, resetToken: null,
 };
 
 async function apiFetch(path, options = {}) {
@@ -239,6 +240,8 @@ async function bootstrapSession(){
 }
 
 function renderAuth(){
+  if(state.showForgotPass) return renderForgotPass();
+  if(state.resetToken) return renderResetPass();
   return `
   <div class="login-wrap">
     <div class="login-card">
@@ -264,9 +267,12 @@ function renderAuth(){
             <input class="input" type="password" id="auth-pass" placeholder="Mot de passe (6 caractères min.)" required minlength="6" style="padding-right:44px;">
             <button type="button" id="toggle-pass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text-faint);font-size:16px;padding:4px;">👁️</button>
           </div>
-          <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">
-            <input type="checkbox" id="remember-me"> Se souvenir de moi
-          </label>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">
+              <input type="checkbox" id="remember-me"> Se souvenir de moi
+            </label>
+            ${state.authMode==='login' ? `<a href="#" id="forgot-pass-link" style="font-size:12.5px;color:var(--hive-1);">Mot de passe oublié ?</a>` : ''}
+          </div>
           <button type="submit" class="btn btn-flame flame-ring" style="margin-top:4px;">
             ${state.authMode==='register' ? "Créer mon compte" : "Se connecter"}
           </button>
@@ -278,7 +284,58 @@ function renderAuth(){
   </div>`;
 }
 
+function renderForgotPass(){
+  return `
+  <div class="login-wrap"><div class="login-card">
+    <div class="login-logo"><span style="font-size:34px;">🔥</span><div class="display" style="font-size:22px;font-weight:700;margin-top:6px;">Mot de passe oublié</div></div>
+    <div class="card" style="padding:22px;">
+      <p style="color:var(--text-dim);font-size:13px;margin:0 0 14px;">On t'envoie un lien de réinitialisation par email.</p>
+      <form id="forgot-form" style="display:flex;flex-direction:column;gap:10px;">
+        <input class="input" type="email" id="forgot-email" placeholder="Adresse email" required>
+        <button type="submit" class="btn btn-flame flame-ring">Envoyer le lien</button>
+      </form>
+      <button id="back-to-login" class="btn btn-ghost" style="width:100%;margin-top:10px;">← Retour</button>
+    </div>
+  </div></div>`;
+}
+function renderResetPass(){
+  return `
+  <div class="login-wrap"><div class="login-card">
+    <div class="login-logo"><span style="font-size:34px;">🔥</span><div class="display" style="font-size:22px;font-weight:700;margin-top:6px;">Nouveau mot de passe</div></div>
+    <div class="card" style="padding:22px;">
+      <form id="reset-form" style="display:flex;flex-direction:column;gap:10px;">
+        <input class="input" type="password" id="new-pass" placeholder="Nouveau mot de passe (6 caractères min.)" required minlength="6">
+        <button type="submit" class="btn btn-flame flame-ring">Réinitialiser</button>
+      </form>
+    </div>
+  </div></div>`;
+}
 function bindAuth(){
+  if(state.showForgotPass){
+    document.getElementById('back-to-login').onclick = ()=>{ state.showForgotPass = false; render(); };
+    document.getElementById('forgot-form').onsubmit = async (e)=>{
+      e.preventDefault();
+      try{
+        await apiFetch('/api/v1/auth/forgot-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: document.getElementById('forgot-email').value }) });
+        toast('Si ce compte existe, un email a été envoyé 📧');
+        state.showForgotPass = false; render();
+      }catch(err){ toast(`Erreur : ${err.message}`); }
+    };
+    return;
+  }
+  if(state.resetToken){
+    document.getElementById('reset-form').onsubmit = async (e)=>{
+      e.preventDefault();
+      try{
+        await apiFetch('/api/v1/auth/reset-password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token: state.resetToken, new_password: document.getElementById('new-pass').value }) });
+        state.resetToken = null;
+        toast('Mot de passe réinitialisé ✅ Connecte-toi.');
+        render();
+      }catch(err){ toast(`Erreur : ${err.message}`); }
+    };
+    return;
+  }
+  document.getElementById('forgot-pass-link')?.addEventListener('click', (e)=>{ e.preventDefault(); state.showForgotPass = true; render(); });
   document.querySelectorAll('.auth-toggle button').forEach(b=>{
     b.onclick = ()=>{ state.authMode = b.dataset.mode; render(); };
   });
@@ -836,6 +893,11 @@ function renderChatOnly(){
   scroll.scrollTop = scroll.scrollHeight;
 }
 
+function consumeResetTokenFromHash(){
+  const m = window.location.hash.match(/reset_token=([^&]+)/);
+  if(m){ state.resetToken = decodeURIComponent(m[1]); history.replaceState(null, '', window.location.pathname); }
+}
+consumeResetTokenFromHash();
 consumeTikTokTokenFromHash();
 if(!state.token){ const saved = localStorage.getItem('babolo_token'); if(saved) state.token = saved; }
 render();
