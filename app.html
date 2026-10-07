@@ -347,15 +347,6 @@ function bindAuth(){
     }catch(err){ toast(`Erreur : ${err.message}`); }
   };
 
-  document.getElementById('btn-dev-login').onclick = async ()=>{
-    try{
-      const data = await apiFetch('/api/v1/auth/dev-login', { method: 'POST' });
-      state.token = data.token;
-      toast('Connecté (mode test) 🔥');
-      render();
-    }catch(err){ toast(`Erreur : ${err.message}`); }
-  };
-
   document.getElementById('toggle-pass').onclick = ()=>{
     const p = document.getElementById('auth-pass');
     p.type = p.type === 'password' ? 'text' : 'password';
