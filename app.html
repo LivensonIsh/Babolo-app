@@ -857,6 +857,7 @@ function bindProfileExtras(){
 }
 
 function renderChat(){
+  loadChatHistory().then(renderChatOnly);
   return `<div style="display:flex;flex-direction:column;gap:16px;">
     <h1 class="display" style="font-size:22px;margin:0;">Support</h1>
     <div class="card" style="padding:18px;">
@@ -864,6 +865,14 @@ function renderChat(){
       <form id="chat-form" style="display:flex;gap:8px;margin-top:10px;"><input class="input" id="chat-input" placeholder="Écris ton message…"><button class="btn btn-flame" type="submit">➤</button></form>
     </div>
   </div>`;
+}
+async function loadChatHistory(){
+  try{
+    const rows = await apiFetch('/api/v1/support/tickets');
+    if(rows.length > 0){
+      state.chat = rows.map(r => ({ from: r.sender === 'user' ? 'me' : 'support', text: r.message, ts: new Date(r.created_at).getTime() }));
+    }
+  }catch(err){ console.error('historique support indisponible', err); }
 }
 function bindChatExtras(){
   document.getElementById('chat-form').onsubmit = async (e)=>{

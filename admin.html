@@ -173,6 +173,7 @@ function renderShell(){
         <button class="nav-item ${state.route==='users'?'active':''}" data-route="users">👥 Utilisateurs</button>
         <button class="nav-item ${state.route==='deposits'?'active':''}" data-route="deposits">💳 Dépôts</button>
         <button class="nav-item ${state.route==='alerts'?'active':''}" data-route="alerts">🚨 Alertes</button>
+        <button class="nav-item ${state.route==='support'?'active':''}" data-route="support">💬 Support</button>
       </aside>
       <main class="main" id="main-content"></main>
     </div>
@@ -384,6 +385,78 @@ async function renderAlerts(){
   }
 }
 
+async function renderSupportList(){
+  const el = document.getElementById('main-content');
+  el.innerHTML = `<div class="topbar"><h1>Support</h1></div><div class="empty-state">Chargement…</div>`;
+  try{
+    const convos = await apiFetch('/api/v1/admin/support');
+    el.innerHTML = `
+      <div class="topbar"><div><h1>Support</h1><p>${convos.length} conversation(s)</p></div></div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Utilisateur</th><th>Dernier message</th><th>De</th><th>Date</th></tr></thead>
+          <tbody>
+            ${convos.map(c => `
+              <tr style="cursor:pointer;" data-action="open-thread" data-id="${c.user_id}">
+                <td>${c.user_email}</td>
+                <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.last_message}</td>
+                <td><span class="badge ${c.last_sender==='user'?'badge-pending':'badge-premium'}">${c.last_sender}</span></td>
+                <td class="mono" style="font-size:11px;">${new Date(c.last_at).toLocaleString('fr-FR')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        ${convos.length===0 ? '<div class="empty-state">Aucun message pour l\'instant.</div>' : ''}
+      </div>
+    `;
+    el.querySelectorAll('[data-action="open-thread"]').forEach(row => {
+      row.onclick = () => { state.currentThreadUserId = row.dataset.id; state.route = 'support-thread'; render(); };
+    });
+  }catch(err){
+    el.innerHTML = `<div class="topbar"><h1>Support</h1></div><div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
+async function renderSupportThread(){
+  const el = document.getElementById('main-content');
+  const uid = state.currentThreadUserId;
+  el.innerHTML = `<div class="topbar"><button class="btn btn-sm" id="back-to-list">← Retour</button></div><div class="empty-state">Chargement…</div>`;
+  document.getElementById('back-to-list').onclick = () => { state.route = 'support'; render(); };
+  try{
+    const msgs = await apiFetch(`/api/v1/admin/support/${uid}`);
+    el.innerHTML = `
+      <div class="topbar"><button class="btn btn-sm" id="back-to-list">← Retour</button></div>
+      <div class="card" style="max-width:600px;">
+        <div style="display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;margin-bottom:14px;">
+          ${msgs.map(m => `
+            <div style="align-self:${m.sender==='user'?'flex-start':'flex-end'};max-width:80%;background:${m.sender==='user'?'var(--bg-elev-2)':'var(--mauve-2)'};color:${m.sender==='user'?'var(--text)':'#fff'};padding:10px 13px;border-radius:12px;font-size:13.5px;">
+              ${m.message}
+            </div>
+          `).join('')}
+        </div>
+        <form id="reply-form" style="display:flex;gap:8px;">
+          <input class="input" id="reply-input" placeholder="Répondre…" style="flex:1;">
+          <button type="submit" class="btn btn-mauve">Envoyer</button>
+        </form>
+      </div>
+    `;
+    document.getElementById('back-to-list').onclick = () => { state.route = 'support'; render(); };
+    document.getElementById('reply-form').onsubmit = async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('reply-input');
+      const message = input.value.trim();
+      if(!message) return;
+      try{
+        await apiFetch(`/api/v1/admin/support/${uid}/reply`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message }) });
+        input.value = '';
+        renderSupportThread();
+      }catch(err){ toast(`Erreur : ${err.message}`); }
+    };
+  }catch(err){
+    el.innerHTML = `<div class="empty-state">Erreur : ${err.message}</div>`;
+  }
+}
+
 function render(){
   if (!state.token) { renderLogin(); return; }
   document.getElementById('app').innerHTML = renderShell();
@@ -394,6 +467,8 @@ function render(){
   else if (state.route === 'users') renderUsers();
   else if (state.route === 'deposits') renderDeposits();
   else if (state.route === 'alerts') renderAlerts();
+  else if (state.route === 'support') renderSupportList();
+  else if (state.route === 'support-thread') renderSupportThread();
 }
 
 render();
